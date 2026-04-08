@@ -13,11 +13,11 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-    const { nombre, cantidad, fecha_caducidad } = req.body; // Leemos los datos del cuerpo de la solicitud
+    const { nombre, cantidad, caduca } = req.body; // Leemos los datos del cuerpo de la solicitud
     try {
         const result = await pool.query(
-            'INSERT INTO ingredientes (nombre, cantidad, fecha_caducidad, location) VALUES ($1, $2, $3, $4) RETURNING *',
-            [nombre, cantidad, fecha_caducidad, 'nevera']
+            'INSERT INTO ingredientes (nombre, cantidad, caduca, location) VALUES ($1, $2, $3, $4) RETURNING *',
+            [nombre, cantidad, caduca, 'nevera']
         );
         res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -28,11 +28,11 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const { nombre, cantidad, fecha_caducidad } = req.body;
+    const { nombre, cantidad, caduca } = req.body;
     try {
         const result = await pool.query(
-            'UPDATE ingredientes SET nombre = $1, cantidad = $2, fecha_caducidad = $3 WHERE id = $4 AND location = $5 RETURNING *',
-            [nombre, cantidad, fecha_caducidad, id, 'nevera']
+            'UPDATE ingredientes SET nombre = $1, cantidad = $2, caduca = $3 WHERE id = $4 AND location = $5 RETURNING *',
+            [nombre, cantidad, caduca, id, 'nevera']
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Ingrediente no encontrado' });
