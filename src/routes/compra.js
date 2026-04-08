@@ -30,11 +30,11 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const { nombre, cantidad, caduca } = req.body;
+    const { nombre, cantidad, caduca, comprado } = req.body;
     try {
         const result = await pool.query(
-            'UPDATE ingredientes SET nombre = $1, cantidad = $2, caduca = $3 WHERE id = $4 AND location = $5 RETURNING *',
-            [nombre, cantidad, caduca, id, 'compra']
+            'UPDATE ingredientes SET nombre = COALESCE($1, nombre), cantidad = COALESCE($2, cantidad), caduca = COALESCE($3, caduca), comprado = COALESCE($4, comprado) WHERE id = $5 AND location = $6 RETURNING *',
+            [nombre, cantidad, caduca, comprado, id, 'compra']
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Ingrediente no encontrado' });
@@ -62,24 +62,6 @@ router.post('/:id/mover-nevera', async (req, res) => {
     } catch (error) {
         console.error('Error al mover ingrediente a nevera:', error);
         res.status(500).json({ error: 'Error al mover ingrediente a nevera' });
-    }
-});
-
-router.patch('/:id/comprado', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const result = await pool.query(
-            'UPDATE ingredientes SET comprado = TRUE WHERE id = $1 AND location = $2 RETURNING *',
-            [id, 'compra']
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Ingrediente no encontrado' });
-        }
-        res.json(result.rows[0]);
-        broadcast('compra:comprado', result.rows[0]); // Notificamos a los clientes conectados
-    } catch (error) {
-        console.error('Error al marcar ingrediente como comprado:', error);
-        res.status(500).json({ error: 'Error al marcar ingrediente como comprado' });
     }
 });
 
