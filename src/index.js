@@ -27,3 +27,4 @@ async function checkDB() {
 checkDB();
 
 app.use('/nevera', require('./routes/nevera'));
+app.use('/compra', require('./routes/compra'));
