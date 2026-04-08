@@ -6,10 +6,20 @@ const pool = require('./db/index');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const http = require('http');
+const server = http.createServer(app);
+
+const ws = require('./websocket/index');
+ws.init(server);
+
 app.use(express.json());
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Servidor ejecutándose en el puerto ${PORT}`);
+});
+
+app.get('/ping', (req, res) => {
+    res.json({ message: 'pong' });
 });
 
 async function checkDB() {

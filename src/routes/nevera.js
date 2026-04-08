@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db/index');
+const { broadcast } = require('../websocket/index');
 
 router.get('/', async (req, res) => {
     try {
@@ -10,7 +11,7 @@ router.get('/', async (req, res) => {
         console.error('Error al obtener ingredientes:', error);
         res.status(500).json({ error: 'Error al obtener ingredientes' });
     }
-});
+});  
 
 router.post('/', async (req, res) => {
     const { nombre, cantidad, caduca } = req.body; // Leemos los datos del cuerpo de la solicitud
@@ -20,6 +21,7 @@ router.post('/', async (req, res) => {
             [nombre, cantidad, caduca, 'nevera']
         );
         res.status(201).json(result.rows[0]);
+        broadcast('nevera:create', result.rows[0]); // Notificamos a los clientes conectados
     } catch (error) {
         console.error('Error al agregar ingrediente:', error);
         res.status(500).json({ error: 'Error al agregar ingrediente' });
@@ -38,6 +40,7 @@ router.put('/:id', async (req, res) => {
             return res.status(404).json({ error: 'Ingrediente no encontrado' });
         }
         res.json(result.rows[0]);
+        broadcast('nevera:update', result.rows[0]); // Notificamos a los clientes conectados
     } catch (error) {
         console.error('Error al actualizar ingrediente:', error);
         res.status(500).json({ error: 'Error al actualizar ingrediente' });
@@ -55,6 +58,7 @@ router.post('/:id/mover-compra', async (req, res) => {
             return res.status(404).json({ error: 'Ingrediente no encontrado' });
         }
         res.json(result.rows[0]);
+        broadcast('nevera:move', { id: result.rows[0].id, newLocation: 'compra' }); // Notificamos a los clientes conectados
     } catch (error) {
         console.error('Error al mover ingrediente a compra:', error);
         res.status(500).json({ error: 'Error al mover ingrediente a compra' });
@@ -66,6 +70,7 @@ router.delete('/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM ingredientes WHERE id = $1 AND location = $2', [id, 'nevera']);
         res.status(204).send();
+        broadcast('nevera:delete', { id }); // Notificamos a los clientes conectados
     } catch (error) {
         console.error('Error al eliminar ingrediente:', error);
         res.status(500).json({ error: 'Error al eliminar ingrediente' });

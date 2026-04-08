@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db/index');
+const { broadcast } = require('../websocket');
 
 router.get('/', async (req, res) => {
     try {
@@ -20,6 +21,7 @@ router.post('/', async (req, res) => {
             [nombre, cantidad, caduca, 'compra']
         );
         res.status(201).json(result.rows[0]);
+        broadcast('compra:create', result.rows[0]); // Notificamos a los clientes conectados
     } catch (error) {
         console.error('Error al agregar ingrediente:', error);
         res.status(500).json({ error: 'Error al agregar ingrediente' });
@@ -38,6 +40,7 @@ router.put('/:id', async (req, res) => {
             return res.status(404).json({ error: 'Ingrediente no encontrado' });
         }
         res.json(result.rows[0]);
+        broadcast('compra:update', result.rows[0]); // Notificamos a los clientes conectados
     } catch (error) {
         console.error('Error al actualizar ingrediente:', error);
         res.status(500).json({ error: 'Error al actualizar ingrediente' });
@@ -55,6 +58,7 @@ router.post('/:id/mover-nevera', async (req, res) => {
             return res.status(404).json({ error: 'Ingrediente no encontrado' });
         }
         res.json(result.rows[0]);
+        broadcast('compra:move', { id: result.rows[0].id, newLocation: 'nevera' });
     } catch (error) {
         console.error('Error al mover ingrediente a nevera:', error);
         res.status(500).json({ error: 'Error al mover ingrediente a nevera' });
@@ -72,6 +76,7 @@ router.patch('/:id/comprado', async (req, res) => {
             return res.status(404).json({ error: 'Ingrediente no encontrado' });
         }
         res.json(result.rows[0]);
+        broadcast('compra:comprado', result.rows[0]); // Notificamos a los clientes conectados
     } catch (error) {
         console.error('Error al marcar ingrediente como comprado:', error);
         res.status(500).json({ error: 'Error al marcar ingrediente como comprado' });
@@ -83,6 +88,7 @@ router.delete('/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM ingredientes WHERE id = $1 AND location = $2', [id, 'compra']);
         res.status(204).send();
+        broadcast('compra:delete', { id }); // Notificamos a los clientes conectados
     } catch (error) {
         console.error('Error al eliminar ingrediente:', error);
         res.status(500).json({ error: 'Error al eliminar ingrediente' });
