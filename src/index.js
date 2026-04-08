@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config();
 
 const pool = require('./db/index');
 
@@ -6,10 +7,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-
-app.get('/ping', (req, res) => {
-    res.json({ message: 'pong' });
-});
 
 app.listen(PORT, () => {
     console.log(`Servidor ejecutándose en el puerto ${PORT}`);
@@ -28,3 +25,4 @@ checkDB();
 
 app.use('/nevera', require('./routes/nevera'));
 app.use('/compra', require('./routes/compra'));
+app.use('/recetas', require('./routes/recetas'));
