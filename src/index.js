@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 require('dotenv').config();
 
 const pool = require('./db/index');
@@ -12,6 +13,9 @@ const server = http.createServer(app);
 const ws = require('./websocket/index');
 ws.init(server);
 
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173'
+}));
 app.use(express.json());
 
 server.listen(PORT, () => {
