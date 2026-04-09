@@ -46,7 +46,19 @@ async function getGroqResponse(ingredientes) {
     const data = await response.json();
     const text = data.choices[0].message.content;
     const recipes = JSON.parse(text);
-    return recipes;
+    
+    // Recalcular have y missing con los ingredientes reales
+    const recetasCorregidas = recipes.map(receta => {
+        const have = receta.ingredients.filter(ing =>
+            ingredientes.some(i => i.toLowerCase() === ing.toLowerCase())
+        );
+        const missing = receta.ingredients.filter(ing =>
+            !ingredientes.some(i => i.toLowerCase() === ing.toLowerCase())
+        );
+        return { ...receta, have, missing };
+    });
+
+    return recetasCorregidas;
 }
 
 router.post('/', async (req, res) => {
