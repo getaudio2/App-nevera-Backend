@@ -41,7 +41,6 @@ async function getGroqResponse() {
     });
 
     const data = await response.json();
-    console.log('Respuesta de Groq:', JSON.stringify(data, null, 2));
     const text = data.choices[0].message.content;
     const recipes = JSON.parse(text);
     return recipes;
