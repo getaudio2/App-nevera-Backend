@@ -58,7 +58,7 @@ router.post('/:id/mover-compra', async (req, res) => {
             return res.status(404).json({ error: 'Ingrediente no encontrado' });
         }
         res.json(result.rows[0]);
-        broadcast('nevera:move', { id: result.rows[0].id, newLocation: 'compra' }); // Notificamos a los clientes conectados
+        broadcast('nevera:move', result.rows[0]); // Notificamos a los clientes conectados
     } catch (error) {
         console.error('Error al mover ingrediente a compra:', error);
         res.status(500).json({ error: 'Error al mover ingrediente a compra' });

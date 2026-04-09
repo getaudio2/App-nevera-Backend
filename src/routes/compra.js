@@ -58,7 +58,7 @@ router.post('/:id/mover-nevera', async (req, res) => {
             return res.status(404).json({ error: 'Ingrediente no encontrado' });
         }
         res.json(result.rows[0]);
-        broadcast('compra:move', { id: result.rows[0].id, newLocation: 'nevera' });
+        broadcast('compra:move', result.rows[0]);
     } catch (error) {
         console.error('Error al mover ingrediente a nevera:', error);
         res.status(500).json({ error: 'Error al mover ingrediente a nevera' });
