@@ -51,7 +51,7 @@ router.post('/:id/mover-nevera', async (req, res) => {
     const { id } = req.params;
     try {
         const result = await pool.query(
-            'UPDATE ingredientes SET location = $1 WHERE id = $2 AND location = $3 RETURNING *',
+            'UPDATE ingredientes SET location = $1,comprado = false WHERE id = $2 AND location = $3 RETURNING *',
             ['nevera', id, 'compra']
         );
         if (result.rows.length === 0) {
