@@ -13,8 +13,11 @@ const server = http.createServer(app);
 const ws = require('./websocket/index');
 ws.init(server);
 
-app.use(cors({
+/*app.use(cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173'
+}));*/
+app.use(cors({
+    origin: true // Solo para debugar
 }));
 app.use(express.json());
 
