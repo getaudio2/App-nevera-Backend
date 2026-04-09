@@ -2,12 +2,15 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/index');
 
-async function getGroqResponse() {
-    const result = await pool.query(
-        'SELECT nombre FROM ingredientes WHERE location = $1', 
-        ['nevera']
-    );
-    const ingredientes = result.rows.map(row => row.nombre);
+async function getGroqResponse(ingredientes) {
+
+    if (!ingredientes || ingredientes.length === 0) {
+        const result = await pool.query(
+            'SELECT nombre FROM ingredientes WHERE location = $1', 
+            ['nevera']
+        );
+        ingredientes = result.rows.map(row => row.nombre);
+    }
 
     const prompt = `Tengo estos ingredientes en la nevera: ${ingredientes.join(', ')}.
 
@@ -47,8 +50,9 @@ async function getGroqResponse() {
 }
 
 router.post('/', async (req, res) => {
+    let ingredientes = req.body.ingredientes;
     try {
-        const recetas = await getGroqResponse();
+        const recetas = await getGroqResponse(ingredientes);
         res.json(recetas);
     } catch (error) {
         console.error('Error al obtener recetas:', error);
