@@ -7,8 +7,15 @@ function init(server) {
         server,
         verifyClient: (info) => {
             const origin = info.origin;
-            const allowed = process.env.CORS_ORIGIN || 'http://localhost:5173';
-            return origin === allowed;
+            
+            // Los clientes nativos (el Capacitor con Android por ej) no envían origen
+            if (!origin || origin === 'null') return true;
+            
+            const allowed = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+                .split(',') // Para añadir múltiples orígenes separados por comas
+                .map(o => o.trim());
+            
+            return allowed.includes(origin);
         }
     });
 
