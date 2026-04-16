@@ -70,7 +70,7 @@ router.delete('/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM ingredientes WHERE id = $1 AND location = $2', [id, 'compra']);
         res.status(204).send();
-        broadcast('compra:delete', { id }); // Notificamos a los clientes conectados
+        broadcast('compra:delete', { id: parseInt(id) }); // Notificamos a los clientes conectados
     } catch (error) {
         console.error('Error al eliminar ingrediente:', error);
         res.status(500).json({ error: 'Error al eliminar ingrediente' });
