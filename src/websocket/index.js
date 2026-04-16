@@ -9,7 +9,7 @@ function init(server) {
             const origin = info.origin;
             console.log('WS origin recibido:', JSON.stringify(origin));
             
-            if (!origin || origin === 'null' || origin === 'https://localhost') return true;
+            if (!origin || origin === 'null' || origin === 'https://localhost' || origin === 'http://localhost:5173') return true;
             
             const allowed = (process.env.CORS_ORIGIN || 'http://localhost:5173')
                 .split(',')
