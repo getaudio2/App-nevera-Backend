@@ -7,12 +7,12 @@ function init(server) {
         server,
         verifyClient: (info) => {
             const origin = info.origin;
+            console.log('WS origin recibido:', JSON.stringify(origin));
             
-            // Los clientes nativos (el Capacitor con Android por ej) no envían origen
             if (!origin || origin === 'null') return true;
             
             const allowed = (process.env.CORS_ORIGIN || 'http://localhost:5173')
-                .split(',') // Para añadir múltiples orígenes separados por comas
+                .split(',')
                 .map(o => o.trim());
             
             return allowed.includes(origin);
