@@ -114,4 +114,4 @@ npm start
 
 ## Repo del frontend
 
-👉 [mi-nevera-frontend](https://github.com/getaudio2/mi-nevera-frontend)
+👉 [mi-nevera-frontend](https://github.com/getaudio2/App-nevera-Frontend)
