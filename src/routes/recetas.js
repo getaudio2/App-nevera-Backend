@@ -46,7 +46,7 @@ router.post('/', async (req, res) => {
             headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: 'llama-3.1-8b-instant',
-                messages: [{ role: 'user', content: `Traduce al español estos textos de recetas de cocina y devuelve SOLO un JSON array con los mismos objetos pero traducidos, sin backticks ni texto extra: ${JSON.stringify(recetas)}` }]
+                messages: [{ role: 'user', content: `Traduce al español estos datos de recetas de cocina. Devuelve ÚNICAMENTE el JSON array, sin ningún texto antes ni después, sin notas, sin backticks, sin explicaciones. Solo el JSON: ${JSON.stringify(recetas)}` }]
             })
         });
         const traduccion = await nombresTraducidos.json();
