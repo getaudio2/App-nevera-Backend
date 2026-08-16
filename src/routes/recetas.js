@@ -29,28 +29,31 @@ router.post('/', async (req, res) => {
         const infoData = await infoRes.json();
 
         // 3. Combinar los datos
-        const recetas = searchData.map(receta => {
-            const info = infoData.find(i => i.id === receta.id);
-            return {
-                name: receta.title,
-                image: receta.image,
-                have: receta.usedIngredients.map(i => i.name),
-                missing: receta.missedIngredients.map(i => i.name),
-                time: info?.readyInMinutes ? `${info.readyInMinutes} min` : null,
-                steps: info?.analyzedInstructions?.[0]?.steps?.map(s => s.step) || [],
-            };
-        });
+        const paraTraducir = recetas.map(r => ({
+            name: r.name,
+            have: r.have,
+            missing: r.missing,
+        }));
 
         const nombresTraducidos = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: 'llama-3.1-8b-instant',
-                messages: [{ role: 'user', content: `Traduce al español estos datos de recetas de cocina. Devuelve ÚNICAMENTE el JSON array, sin ningún texto antes ni después, sin notas, sin backticks, sin explicaciones. Solo el JSON: ${JSON.stringify(recetas)}` }]
+                messages: [{ role: 'user', content: `Traduce al español estos datos de recetas. ÚNICAMENTE el JSON array, sin texto extra, sin backticks: ${JSON.stringify(paraTraducir)}` }]
             })
         });
         const traduccion = await nombresTraducidos.json();
-        const recetasES = JSON.parse(traduccion.choices[0].message.content);
+        const traducciones = JSON.parse(traduccion.choices[0].message.content);
+
+        // Combinar traducciones con los pasos originales
+        const recetasES = recetas.map((r, i) => ({
+            ...r,
+            name: traducciones[i].name,
+            have: traducciones[i].have,
+            missing: traducciones[i].missing,
+        }));
+
         res.json(recetasES);
     } catch (error) {
         console.error('Error al obtener recetas:', error);
