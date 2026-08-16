@@ -29,6 +29,19 @@ router.post('/', async (req, res) => {
         const infoData = await infoRes.json();
 
         // 3. Combinar los datos
+        const recetas = searchData.map(receta => {
+            const info = infoData.find(i => i.id === receta.id);
+            return {
+                name: receta.title,
+                image: receta.image,
+                have: receta.usedIngredients.map(i => i.name),
+                missing: receta.missedIngredients.map(i => i.name),
+                time: info?.readyInMinutes ? `${info.readyInMinutes} min` : null,
+                steps: info?.analyzedInstructions?.[0]?.steps?.map(s => s.step) || [],
+            };
+        });
+
+        // 4. Preparar para traducir
         const paraTraducir = recetas.map(r => ({
             name: r.name,
             have: r.have,
