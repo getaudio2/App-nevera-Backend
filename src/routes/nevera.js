@@ -14,11 +14,11 @@ router.get('/', async (req, res) => {
 });  
 
 router.post('/', async (req, res) => {
-    const { nombre, cantidad, caduca } = req.body; // Leemos los datos del cuerpo de la solicitud
+    const { nombre, cantidad, caduca, emoji, categoria } = req.body; // Leemos los datos del cuerpo de la solicitud
     try {
         const result = await pool.query(
-            'INSERT INTO ingredientes (nombre, cantidad, caduca, location) VALUES ($1, $2, $3, $4) RETURNING *',
-            [nombre, cantidad, caduca, 'nevera']
+            'INSERT INTO ingredientes (nombre, cantidad, caduca, location, emoji, categoria) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [nombre, cantidad, caduca, 'nevera', emoji, categoria]
         );
         res.status(201).json(result.rows[0]);
         broadcast('nevera:create', result.rows[0]); // Notificamos a los clientes conectados
@@ -30,11 +30,11 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const { nombre, cantidad, caduca } = req.body;
+    const { nombre, cantidad, caduca, emoji, categoria } = req.body;
     try {
         const result = await pool.query(
-            'UPDATE ingredientes SET nombre = $1, cantidad = $2, caduca = $3 WHERE id = $4 AND location = $5 RETURNING *',
-            [nombre, cantidad, caduca, id, 'nevera']
+            'UPDATE ingredientes SET nombre = $1, cantidad = $2, caduca = $3, emoji = $4, categoria = $5 WHERE id = $6 AND location = $7 RETURNING *',
+            [nombre, cantidad, caduca, emoji, categoria, id, 'nevera']
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Ingrediente no encontrado' });
