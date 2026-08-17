@@ -20,6 +20,9 @@ router.post('/', async (req, res) => {
             `https://api.spoonacular.com/recipes/findByIngredients?ingredients=${ingredientes.join(',')}&number=5&ranking=1&ignorePantry=true&apiKey=${process.env.SPOONACULAR_API_KEY}`
         );
         const searchData = await searchRes.json();
+        if (!searchData || searchData.length === 0) {
+            return res.json([]);
+        }
         const ids = searchData.map(r => r.id).join(',');
 
         // 2. Obtener info detallada de todas las recetas en una sola llamada
@@ -42,30 +45,13 @@ router.post('/', async (req, res) => {
         });
 
         // 4. Preparar para traducir
-        const paraTraducir = recetas.map(r => ({
-            name: r.name,
-            have: r.have,
-            missing: r.missing,
-        }));
-
-        const nombresTraducidos = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: 'llama-3.1-8b-instant',
-                messages: [{ role: 'user', content: `Traduce al español estos datos de recetas. ÚNICAMENTE el JSON array, sin texto extra, sin backticks: ${JSON.stringify(paraTraducir)}` }]
-            })
-        });
-        const traduccion = await nombresTraducidos.json();
-        const traducciones = JSON.parse(traduccion.choices[0].message.content);
-
-        // Combinar traducciones con los pasos originales
-        const recetasES = recetas.map((r, i) => ({
+        const recetasES = await Promise.all(recetas.map(async (r) => ({
             ...r,
-            name: traducciones[i].name,
-            have: traducciones[i].have,
-            missing: traducciones[i].missing,
-        }));
+            name: await traducir(r.name),
+            have: await Promise.all(r.have.map(i => traducir(i))),
+            missing: await Promise.all(r.missing.map(i => traducir(i))),
+            //steps: await Promise.all(r.steps.map(s => traducir(s))), // Los steps se quedan en inglés por ahora, ya que la traducción puede ser muy larga y Spoonacular no devuelve pasos en español
+        })));
 
         res.json(recetasES);
     } catch (error) {
@@ -73,5 +59,29 @@ router.post('/', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener recetas' });
     }
 });
+
+// Función helper para traducir texto
+async function traducir(texto) {
+    if (!texto || texto.trim() === '') return texto;
+    try {
+        const res = await fetch('https://api-free.deepl.com/v2/translate', {
+            method: 'POST',
+            headers: {
+                'Authorization': `DeepL-Auth-Key ${process.env.DEEPL_API_KEY}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                text: [texto],
+                source_lang: 'EN',
+                target_lang: 'ES',
+            })
+        });
+        const data = await res.json();
+        return data.translations[0].text;
+    } catch (e) {
+        console.error('Error traduciendo:', texto, e.message);
+        return texto; // devuelve el texto original si es que falla la traducción por problema del parseo con Spoonacular
+    }
+}
 
 module.exports = router;
