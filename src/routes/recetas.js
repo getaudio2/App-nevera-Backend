@@ -2,6 +2,54 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/index');
 
+const CATALOGO = [
+  { nombre: 'Pollo', en: 'chicken' },
+  { nombre: 'Ternera', en: 'beef' },
+  { nombre: 'Cerdo', en: 'pork' },
+  { nombre: 'Salmón', en: 'salmon' },
+  { nombre: 'Atún', en: 'tuna' },
+  { nombre: 'Tomate', en: 'tomato' },
+  { nombre: 'Lechuga', en: 'lettuce' },
+  { nombre: 'Cebolla', en: 'onion' },
+  { nombre: 'Ajo', en: 'garlic' },
+  { nombre: 'Zanahoria', en: 'carrot' },
+  { nombre: 'Pimiento', en: 'bell pepper' },
+  { nombre: 'Brócoli', en: 'broccoli' },
+  { nombre: 'Espinacas', en: 'spinach' },
+  { nombre: 'Patata', en: 'potato' },
+  { nombre: 'Manzana', en: 'apple' },
+  { nombre: 'Plátano', en: 'banana' },
+  { nombre: 'Naranja', en: 'orange' },
+  { nombre: 'Limón', en: 'lemon' },
+  { nombre: 'Fresas', en: 'strawberries' },
+  { nombre: 'Leche', en: 'milk' },
+  { nombre: 'Queso', en: 'cheese' },
+  { nombre: 'Yogur', en: 'yogurt' },
+  { nombre: 'Mantequilla', en: 'butter' },
+  { nombre: 'Huevos', en: 'eggs' },
+  { nombre: 'Arroz', en: 'rice' },
+  { nombre: 'Pasta', en: 'pasta' },
+  { nombre: 'Lentejas', en: 'lentils' },
+  { nombre: 'Garbanzos', en: 'chickpeas' },
+  { nombre: 'Pan', en: 'bread' },
+  { nombre: 'Aceite', en: 'olive oil' },
+];
+
+function mapearACatalogo(nombreEN) {
+    const lower = nombreEN.toLowerCase();
+    const encontrado = CATALOGO.find(item =>
+        lower.includes(item.en.toLowerCase()) ||
+        item.en.toLowerCase().includes(lower)
+    );
+    return encontrado ? encontrado.nombre : null;
+}
+
+const mapearOTraducir = async (nombreEN) => {
+    const delCatalogo = mapearACatalogo(nombreEN);
+    if (delCatalogo) return delCatalogo; // match directo, sin DeepL
+    return await traducir(nombreEN); // no está en catálogo, traducir
+};
+
 router.post('/', async (req, res) => {
     let ingredientes = req.body.ingredientes;
 
@@ -48,8 +96,8 @@ router.post('/', async (req, res) => {
         const recetasES = await Promise.all(recetas.map(async (r) => ({
             ...r,
             name: await traducir(r.name),
-            have: await Promise.all(r.have.map(i => traducir(i))),
-            missing: await Promise.all(r.missing.map(i => traducir(i))),
+            have: await Promise.all(r.have.map(i => mapearOTraducir(i))),
+            missing: await Promise.all(r.missing.map(i => mapearOTraducir(i))),
             //steps: await Promise.all(r.steps.map(s => traducir(s))), // Los steps se quedan en inglés por ahora, ya que la traducción puede ser muy larga y Spoonacular no devuelve pasos en español
         })));
 
