@@ -43,3 +43,4 @@ checkDB();
 app.use('/nevera', require('./routes/nevera'));
 app.use('/compra', require('./routes/compra'));
 app.use('/recetas', require('./routes/recetas'));
+app.use('/favoritas', require('./routes/recetas_favoritas'));
