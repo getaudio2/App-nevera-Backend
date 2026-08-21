@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/index');
 const { broadcast } = require('../websocket');
+const { mandarNotificacion } = require('../utils/notificaciones');
 
 router.get('/', async (req, res) => {
     try {
@@ -59,6 +60,10 @@ router.post('/:id/mover-nevera', async (req, res) => {
         }
         res.json(result.rows[0]);
         broadcast('compra:move', result.rows[0]);
+        await mandarNotificacion(
+            '🥚 Nevera actualizada',
+            `${result.rows[0].nombre} se ha comprado`
+        );
     } catch (error) {
         console.error('Error al mover ingrediente a nevera:', error);
         res.status(500).json({ error: 'Error al mover ingrediente a nevera' });

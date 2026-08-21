@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/index');
 const { broadcast } = require('../websocket/index');
+const { mandarNotificacion } = require('../utils/notificaciones');
 
 router.get('/', async (req, res) => {
     try {
@@ -25,6 +26,40 @@ router.post('/', async (req, res) => {
     } catch (error) {
         console.error('Error al agregar ingrediente:', error);
         res.status(500).json({ error: 'Error al agregar ingrediente' });
+    }
+});
+
+router.post('/confirmar-ticket', async (req, res) => {
+    const { ingredientes } = req.body;
+    if (!Array.isArray(ingredientes) || ingredientes.length === 0) {
+        return res.status(400).json({ error: 'Lista de ingredientes vacía' });
+    }
+    try {
+        const insertados = [];
+        for (const item of ingredientes) {
+            const result = await pool.query(
+                'INSERT INTO ingredientes (nombre, caduca, location, emoji, categoria, nombre_en) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+                [item.nombre, item.caduca, 'nevera', item.emoji, item.categoria, item.nombre_en]
+            );
+            const nuevo = result.rows[0];
+            insertados.push(nuevo);
+            broadcast('nevera:create', nuevo);
+
+            // Elimina de la lista de compra cualquier pendiente con el mismo nombre
+            const eliminados = await pool.query(
+                'DELETE FROM ingredientes WHERE nombre = $1 AND location = $2 RETURNING id',
+                [item.nombre, 'compra']
+            );
+            eliminados.rows.forEach(row => broadcast('compra:delete', { id: row.id }));
+        }
+        res.status(201).json(insertados);
+        await mandarNotificacion(
+            '🧾 Compra registrada',
+            'Se ha hecho la compra, revisa la nevera'
+        );
+    } catch (error) {
+        console.error('Error al confirmar ticket:', error);
+        res.status(500).json({ error: 'Error al confirmar ticket' });
     }
 });
 
@@ -59,6 +94,10 @@ router.post('/:id/mover-compra', async (req, res) => {
         }
         res.json(result.rows[0]);
         broadcast('nevera:move', result.rows[0]); // Notificamos a los clientes conectados
+        await mandarNotificacion( // Push notification para informar que un ingrediente se ha movido a la lista de compra
+            '🛒 Nevera actualizada',
+            `${result.rows[0].nombre} se ha acabado`
+        );
     } catch (error) {
         console.error('Error al mover ingrediente a compra:', error);
         res.status(500).json({ error: 'Error al mover ingrediente a compra' });
